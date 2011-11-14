@@ -1,8 +1,6 @@
 package cz.cvut.felk.via.gae.web;
 
 import java.net.URI;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,11 +73,13 @@ public class DemoController {
 	
 	@RequestMapping(value="/address/{addressId}", method=RequestMethod.DELETE)
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void delete(@PathVariable String addressId) {
-		final URI key = URI.create("/address/" + addressId);
+	public void delete(@PathVariable String addressId) throws ResourceNotFoundException {
+		final URI id = URI.create("/address/" + addressId);
 		
-		if (cache.containsKey(key)) {
-			cache.remove(key);
+		if (cache.containsKey(id)) {
+			cache.remove(id);
+		} else {
+			throw new ResourceNotFoundException(id);
 		}
 	}
 	
