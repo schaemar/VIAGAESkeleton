@@ -1,0 +1,9 @@
+SpringFramework + GAE preconfigured project skeleton
+----------------------------------------------------
+
+This project contains GAE Eclipse project with integrated SpringFramework in a REST manner. 
+DemoController and one domain object is also included.
+
+Intended to be used as an example in VIA course (https://sites.google.com/a/via.felk.cvut.cz/via/).
+
+
