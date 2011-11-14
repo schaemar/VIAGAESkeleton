@@ -53,6 +53,7 @@ public class DemoController {
 
 	@RequestMapping(value="/address/", method=RequestMethod.POST)
 	@ResponseBody
+	@ResponseStatus(HttpStatus.CREATED)
 	public PostalAddress create(@RequestBody @Valid PostalAddress address, HttpServletResponse response) {
 		
 		final URI id = URI.create("/address/" + (new Date()).getTime());	// use better id generator, this is just demo ....
