@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans	xmlns="http://www.springframework.org/schema/beans"
+		xmlns:mvc="http://www.springframework.org/schema/mvc"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     	xmlns:context="http://www.springframework.org/schema/context"
+     	xmlns:security="http://www.springframework.org/schema/security"
+     	
+     	xsi:schemaLocation="
+     		http://www.springframework.org/schema/beans
+			http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/mvc
+        	http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd
+         	http://www.springframework.org/schema/context
+         	http://www.springframework.org/schema/context/spring-context-3.0.xsd
+         	http://www.springframework.org/schema/security 
+         	http://www.springframework.org/schema/security/spring-security-3.1.xsd
+         	">
+         	
+    <security:global-method-security secured-annotations="enabled" pre-post-annotations="enabled">
+      <security:expression-handler ref="expressionHandler"/>
+    </security:global-method-security>
+
+    <bean id="expressionHandler" class="org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler">
+      <property name="permissionEvaluator" ref="resourcePermissionEvaluator"/>
+    </bean>
+ 
+    <context:component-scan base-package="org.sprintapi.jinn" />
+
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"/>
+
+	<!-- Creates the JSR-303 Validator -->
+	<bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean" />
+
+	<!-- Configures JSR-303 Declarative Validation with default provider on classpath (Hibernate Validator) -->
+	<bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean"/>
+
+	<bean id="conversionServiceInterceptor" class="org.springframework.web.servlet.handler.ConversionServiceExposingInterceptor">
+		<constructor-arg index="0">
+			<ref bean="conversionService"/>	
+		</constructor-arg>
+	</bean>
+
+    <bean class="org.sprintapi.web.SprintAdapter">
+		<property name="webBindingInitializer">
+			<!-- Configures Spring MVC DataBinder instances -->
+			<bean class="org.springframework.web.bind.support.ConfigurableWebBindingInitializer">
+				<property name="validator" ref="validator" />
+				<property name="conversionService" ref="conversionService" />
+			</bean>
+		</property>
+    	<property name="customArgumentResolvers">
+			<list>
+    			<bean class="org.sprintapi.web.SprintArgumentResolver">
+					<property name="manager" ref="contentManager"/>
+				</bean>
+			</list>
+		</property>
+	    <property name="messageConverters">
+    		<list>
+    			<bean class="org.sprintapi.web.BinaryHttpMessageConverter"/>
+	        	<bean class="org.springframework.http.converter.StringHttpMessageConverter"/>
+    			<bean class="org.springframework.http.converter.ResourceHttpMessageConverter"/>
+        		<bean class="org.sprintapi.web.SprintJsonHttpMessageConverter">
+      				<property name="objectMapper" ref="jsonObjectMapper"/>
+      			</bean>		 
+    		</list>
+    	</property>
+		<property name="customMethodInvocationListeners">
+			<list>
+		  		<bean class="org.sprintapi.web.SprintMethodInvocationListener">
+    				<property name="manager" ref="contentManager"/>
+    			</bean>
+			</list>
+		</property>
+	</bean>
+  
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver"/>
+ 	<bean class="org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver"/>
+ 	<bean class="org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver"/>
+	
+	<bean class="org.springframework.web.servlet.handler.MappedInterceptor">
+		<constructor-arg index="0">
+			<null/>
+		</constructor-arg>
+		<constructor-arg index="1">
+			<ref bean="conversionServiceInterceptor"/>
+		</constructor-arg>
+ 	</bean>             	
+
+	<bean id="velocityConfig" class="org.springframework.web.servlet.view.velocity.VelocityConfigurer">
+		<property name="resourceLoaderPath" value="/WEB-INF/templates/"/>
+		<property name="configLocation" value="/WEB-INF/velocity.properties"/>
+	</bean>
+
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+  		<property name="mediaTypes">
+    		<map>
+      			<entry key="html" value="text/html"/>
+      			<entry key="json" value="application/json"/>
+      			<entry key="vcf" value="text/x-vcard"/>
+    		</map>
+  		</property>
+  		<property name="viewResolvers">
+    		<list>
+  		    	<bean class="org.springframework.web.servlet.view.velocity.VelocityViewResolver">
+                	<property name="cache" value="true" />
+                	<property name="prefix" value="" />
+                	<property name="exposeSpringMacroHelpers" value="true" />
+                	<property name="order" value="1"></property>
+                	<property name="contentType" value="text/html; charset=utf-8"/>
+                	<property name="suffix" value=".vm" />
+                	<property name="dateToolAttribute" value="dateTool"/>
+                	<property name="numberToolAttribute" value="numberTool"/>
+				</bean>
+    		</list>
+  		</property>
+  		<property name="defaultViews">
+
+    		<list> 
+    			<bean class="org.sprintapi.jinn.web.ResourceJsonView">
+      				<property name="objectMapper" ref="jsonObjectMapper"/>
+      			</bean>
+       		</list>
+       		 
+  		</property>
+  		<property name="useJaf" value="false"/>
+  		<property name="defaultContentType" value="*/*"/>
+  		<property name="useNotAcceptableStatusCode" value="true"/>
+  		<property name="favorPathExtension" value="false"/>
+	</bean>	
+	
+	<security:http use-expressions="true" entry-point-ref="gaeEntryPoint" auto-config="false" create-session="never" >
+    	<security:access-denied-handler ref="accessDeniedHandler"/>
+		<security:custom-filter position="PRE_AUTH_FILTER" ref="gaeFilter" />
+    </security:http>
+
+    <bean id="gaeEntryPoint" class="org.sprintapi.security.GoogleAccountsAuthEntryPoint">
+    	<property name="errorHandler" ref="clientErrorHandler"/>
+    </bean>
+
+	<security:authentication-manager alias="authenticationManager">
+    	<security:authentication-provider ref="gaeAuthenticationProvider"/>
+	</security:authentication-manager>
+
+	<bean id="gaeAuthenticationProvider" class="org.sprintapi.security.GoogleAccountsAuthProvider">
+	    <property name="authService" ref="authService"/>
+	</bean>
+
+	<bean id="gaeFilter" class="org.sprintapi.security.SprintAuthenticationFilter">
+    	<property name="authenticationManager" ref="authenticationManager"/>
+    	<property name="authService" ref="authService"/>
+	</bean>
+	
+	<bean id="accessDeniedHandler" class="org.sprintapi.security.SprintAccessDeniedHandler">
+		<property name="errorHandler" ref="clientErrorHandler"/>
+	</bean>
+	
+	<bean name="clientErrorHandler" class="org.sprintapi.jinn.web.ClientErrorHandler"/>
+	
+</beans>
