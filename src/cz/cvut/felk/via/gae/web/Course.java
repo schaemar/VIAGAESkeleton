@@ -7,6 +7,8 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
+import org.hibernate.validator.constraints.NotBlank;
+
 import com.google.appengine.api.datastore.Key;
 
 @PersistenceCapable
@@ -20,12 +22,16 @@ public class Course implements Serializable {
 	@PrimaryKey
 	@Persistent
 	private Key key;
+	
+	@NotBlank
 	@Persistent
 	private String code;
-
+	
+	@NotBlank
 	@Persistent
 	private String name;
 
+	
 	@Persistent
 	private String uri;
 	

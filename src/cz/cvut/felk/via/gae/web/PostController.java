@@ -1,15 +1,12 @@
 package cz.cvut.felk.via.gae.web;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -26,7 +23,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.Query;
 
 @Controller
 public class PostController {
@@ -89,19 +85,28 @@ public class PostController {
 	}
 	@RequestMapping(value="/post/{post_id}", method=RequestMethod.PUT)
 	@ResponseBody
-	public Post updatePost(@RequestBody @Valid Post post, @PathVariable Long post_id) {
+	public Post updatePost(@RequestBody @Valid Post post, @PathVariable Long post_id) throws ResourceNotFoundException {
+		
+		try{
 		Post p = (Post)pm.getObjectById(Post.class,post_id);
 		pm.deletePersistent(p);
 		pm.makePersistent(post);
 		final URI uri = URI.create("/post/" + (post.getKey()));
 		post.setUri(uri.toString());
+		}catch (Exception e) {
+		throw new ResourceNotFoundException(URI.create("/post/"+post_id));	
+		}
 		return post;
 	}
 	
 	@RequestMapping(value="/post/{post_id}", method=RequestMethod.DELETE)
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deletePost(@PathVariable Long post_id) throws ResourceNotFoundException {
-		pm.deletePersistent((Post)pm.getObjectById(Post.class,post_id));
+		try{Post p = (Post)pm.getObjectById(Post.class,post_id);
+		pm.deletePersistent(p);
+		}catch (Exception e) {
+		throw new ResourceNotFoundException(URI.create("/post/"+post_id));	
+		}
 	}
 	
 	//COURSES////////////////////
@@ -146,11 +151,16 @@ public class PostController {
 	}
 	@RequestMapping(value="/course/{course_id}", method=RequestMethod.PUT)
 	@ResponseBody
-	public Course updateCourse(@RequestBody @Valid Course course, @PathVariable String course_id) {
+	public Course updateCourse(@RequestBody @Valid Course course, @PathVariable String course_id) throws ResourceNotFoundException {
 		Key key = KeyFactory.createKey(Course.class.getSimpleName(), course_id);
-		Course p = (Course)pm.getObjectById(Course.class,key);
+		try {
+			Course p = (Course)pm.getObjectById(Course.class,key);
+		
 		pm.deletePersistent(p);
 		pm.makePersistent(course);
+		}catch (Exception e) {
+			throw new ResourceNotFoundException(URI.create(course_id));
+		}
 		return course;
 	}
 	
@@ -158,7 +168,15 @@ public class PostController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteCourse(@PathVariable String course_id) throws ResourceNotFoundException {
 		Key key = KeyFactory.createKey(Course.class.getSimpleName(), course_id);
-		pm.deletePersistent((Course)pm.getObjectById(Course.class,key));
+		try {
+			Course c = (Course)pm.getObjectById(Course.class,key);
+			pm.deletePersistent(c);
+		}catch (Exception e) {
+			throw new ResourceNotFoundException(URI.create(course_id));
+		} 
+		
+		
+		
 	}
 
 
