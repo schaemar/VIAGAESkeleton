@@ -9,13 +9,36 @@
 <html>
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <title>Spring + GAE Demo skeleton</title>
+    <title>Skeleton</title>
   </head>
 
   <body>
-    <h1>Spring + GAE Demo skeleton!</h1>
-	
+    <h1>Testing skeleton</h1>
+	<p>Beta version - not effective data handling, put/update - bug (deleting and creating new one) </p>
     <table>
+      <tr>
+        <td colspan="2" style="font-weight:bold;">Available URIs - Posts/Courses :</td>        
+      </tr>
+      <tr>
+      <td>List posts</td><td>GET(/posts/)</td>
+      </tr>
+            <tr>
+      <td>List 20 posts from xth</td><td>GET(/posts/x)</td>
+      </tr>
+      <tr>
+      <td>Create new post</td><td>POST(/posts/, Post)</td>
+      </tr>
+      <tr>
+      <td>Read a post</td><td>GET([post uri])</td>
+      </tr>
+      <tr>
+      <td>Update a post</td><td>PUT([post uri], Post)</td>
+      </tr>
+      <tr>
+      <td>Delete a post</td><td>DELETE([post uri])</td>
+      </tr>
+    </table>
+     <table>
       <tr>
         <td colspan="2" style="font-weight:bold;">Available URIs:</td>        
       </tr>
@@ -35,5 +58,7 @@
       <td>Delete an address</td><td>DELETE([address uri])</td>
       </tr>
     </table>
+    
+    
   </body>
 </html>
